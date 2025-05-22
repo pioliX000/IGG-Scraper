@@ -1,5 +1,4 @@
 import json
-import time
 from bs4 import BeautifulSoup
 import requests
 import re
@@ -9,13 +8,11 @@ import threading
 import queue
 import webbrowser # Import the webbrowser module
 import os
+import urllib.request
+import concurrent.futures
 
 TRUSTED = ["drive.google.com", "megaup.net", "mega.nz", "urlbluemedia"]
-
-if os.path.exists(os.path.expandvars(r"%appdata%\\IGG-Scraper")):
-	pass
-else:
-	os.mkdir(os.path.expandvars(r"%appdata%\\IGG-Scraper"))
+TRUSTED_SECTIONS = ["Link MegaUp.net", "Link Mega.nz", "Link Google Drive"]
 
 def deobfuscate(url):
 	try:
@@ -38,26 +35,52 @@ def deobfuscate(url):
 	except Exception as e:
 		return None
 
+def part_number(link):
+    try:
+        part_str = link.split('.part')[1].split('.rar')[0]
+        return int(part_str)
+    except (IndexError, ValueError):
+        return float('inf')
+
 def extract_links(url):
 	download_links = []
+	links_to_deobfuscate = []
 
 	try:
 		response = requests.get(url, timeout=10)
 		soup = BeautifulSoup(response.content, 'html.parser')
 
-		dl_tags = soup.find_all('a', string=lambda text: text and ('Download HERE' in text or 'Part' in text), href=True)
+		categorized_links = {}
 
-		for a_tag in dl_tags:
-			href = a_tag.get('href')
-			if href:
-				if any(url in href for url in TRUSTED):				
-					if 'urlbluemedia' in href:
-						deobf_link = deobfuscate(href)
-						if deobf_link:
-							if any(url in deobf_link for url in TRUSTED):				
-								download_links.append(deobf_link)
-					else:
-						download_links.append(href)
+		for b_tag in soup.find_all('b', class_='uk-heading-bullet'):
+			section_name = b_tag.get_text().replace(':', '').strip()
+			links = []
+			parent_p = b_tag.find_parent('p')
+			if parent_p:
+				for a_tag in parent_p.find_all('a'):
+					links.append(a_tag['href'])
+			categorized_links[section_name] = links
+		
+		for section, urls in categorized_links.items():
+			if not section in TRUSTED_SECTIONS:
+				continue
+			for href in urls:
+				if 'urlbluemedia' in href:
+					links_to_deobfuscate.append(href)
+				else:
+					download_links.append(href)
+
+		with concurrent.futures.ThreadPoolExecutor(max_workers=len(links_to_deobfuscate)) as executor:
+			future_to_link = {executor.submit(deobfuscate, link): link for link in links_to_deobfuscate}
+
+			for future in concurrent.futures.as_completed(future_to_link):
+				original_link = future_to_link[future]
+				deobf_link = future.result()
+				if deobf_link:
+					if any(trusted_url in deobf_link for trusted_url in TRUSTED):
+						download_links.append(deobf_link)
+		
+		download_links = sorted(download_links, key=part_number)
 		return download_links
 	except requests.exceptions.RequestException as e:
 		return []
