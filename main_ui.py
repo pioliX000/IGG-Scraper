@@ -12,7 +12,7 @@ import urllib.request
 import concurrent.futures
 
 TRUSTED = ["drive.google.com", "megaup.net", "mega.nz", "urlbluemedia"]
-TRUSTED_SECTIONS = ["Link MegaUp.net", "Link Mega.nz", "Link Google Drive"]
+TRUSTED_SECTIONS = ["Link MegaUp.net", "Link Mega.nz", "Link Mega.co.nz", "Link Google Drive"]
 
 def deobfuscate(url):
 	try:
@@ -36,11 +36,11 @@ def deobfuscate(url):
 		return None
 
 def part_number(link):
-    try:
-        part_str = link.split('.part')[1].split('.rar')[0]
-        return int(part_str)
-    except (IndexError, ValueError):
-        return float('inf')
+	try:
+		part_str = link.split('.part')[1].split('.rar')[0]
+		return int(part_str)
+	except (IndexError, ValueError):
+		return float('inf')
 
 def extract_links(url):
 	download_links = []
@@ -121,6 +121,9 @@ class GameSelectorApp:
 		self.search_button = tk.Button(self.search_frame, text="Search", command=self.perform_search)
 		self.search_button.pack(side="left", padx=(5, 0))
 
+		self.search_button = tk.Button(self.search_frame, text="Update Repo", command=self.update_repo)
+		self.search_button.pack(side="left", padx=(5, 0))
+
 		self.game_list_frame = tk.Frame(root)
 		self.game_list_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
@@ -181,6 +184,13 @@ class GameSelectorApp:
 		self.current_game_index = 0
 		self.display_games(self.filtered_games_data)
 
+	def update_repo(self):
+		urllib.request.urlretrieve("https://raw.githubusercontent.com/pioliX000/IGG-Scraper/refs/heads/main/links_reformatted.json", "links_reformatted.json")
+		t = tk.Toplevel(self.root)
+		t.wm_title("Info")
+		l = tk.Label(t, text="Repo Update Successful")
+		l.pack(side="top", fill="both", expand=True, padx=50, pady=10)
+		
 	def on_search_change(self, event):
 		self.perform_search()
 
