@@ -1,3 +1,4 @@
+from rapidfuzz import fuzz
 import json
 from bs4 import BeautifulSoup
 import requests
@@ -6,7 +7,7 @@ import tkinter as tk
 from tkinter import ttk
 import threading
 import queue
-import webbrowser # Import the webbrowser module
+import webbrowser
 import os
 import urllib.request
 import concurrent.futures
@@ -181,10 +182,15 @@ class GameSelectorApp:
 
 	def perform_search(self):
 		search_query = self.search_entry.get().lower()
-		self.filtered_games_data = [
-			game for game in self.all_games_data
-			if search_query in game["name"].lower()
-		]
+		self.filtered_games_data = []
+		for game in self.all_games_data:
+			game_name = game["name"].lower()
+
+			score = fuzz.token_set_ratio(search_query, game_name)
+
+			if score >= 70:
+				self.filtered_games_data.append(game)
+
 		self.current_game_index = 0
 		self.display_games(self.filtered_games_data)
 
