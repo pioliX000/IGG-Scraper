@@ -14,6 +14,10 @@ import concurrent.futures
 TRUSTED = ["drive.google.com", "megaup.net", "mega.nz", "urlbluemedia"]
 TRUSTED_SECTIONS = ["Link MegaUp.net", "Link Mega.nz", "Link Mega.co.nz", "Link Google Drive"]
 
+if not os.path.exists(os.path.expandvars(r"%USERPROFILE%\\Documents\\IGG-Scraper")):
+	os.mkdir(os.path.expandvars(r"%USERPROFILE%\\Documents\\IGG-Scraper"))
+	urllib.request.urlretrieve("https://raw.githubusercontent.com/pioliX000/IGG-Scraper/refs/heads/main/links_reformatted.json", os.path.expandvars(r"%USERPROFILE%\\Documents\\IGG-Scraper\\links_reformatted.json"))
+
 def deobfuscate(url):
 	try:
 		html = requests.get(url, timeout=10).text
@@ -185,7 +189,7 @@ class GameSelectorApp:
 		self.display_games(self.filtered_games_data)
 
 	def update_repo(self):
-		urllib.request.urlretrieve("https://raw.githubusercontent.com/pioliX000/IGG-Scraper/refs/heads/main/links_reformatted.json", "links_reformatted.json")
+		urllib.request.urlretrieve("https://raw.githubusercontent.com/pioliX000/IGG-Scraper/refs/heads/main/links_reformatted.json", os.path.expandvars(r"%USERPROFILE%\\Documents\\IGG-Scraper\\links_reformatted.json"))
 		t = tk.Toplevel(self.root)
 		t.wm_title("Info")
 		l = tk.Label(t, text="Repo Update Successful\nrestart to apply")
@@ -305,18 +309,15 @@ class GameSelectorApp:
 
 if __name__ == "__main__":
 	try:
-		with open("links_reformatted.json", "r", encoding="utf8") as json_file:
+		with open(os.path.expandvars(r"%USERPROFILE%\\Documents\\IGG-Scraper\\links_reformatted.json"), "r", encoding="utf8") as json_file:
 			game_links = json.load(json_file)
 	except FileNotFoundError:
-		print("links.json not found. Please create it with your game data.")
+		print("links_reformatted.json not found. Please create it with your game data.")
 		game_links = []
 	except json.JSONDecodeError:
-		print("Error decoding links.json. Please check its format.")
+		print("Error decoding links_reformatted.json. Please check its format.")
 		game_links = []
 
-	if not game_links:
-		print("No game data loaded. Exiting.")
-	else:
-		root = tk.Tk()
-		app = GameSelectorApp(root, game_links)
-		root.mainloop()
+	root = tk.Tk()
+	app = GameSelectorApp(root, game_links)
+	root.mainloop()
