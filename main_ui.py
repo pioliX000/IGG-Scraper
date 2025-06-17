@@ -121,8 +121,8 @@ class GameSelectorApp:
 		self.search_button = tk.Button(self.search_frame, text="Search", command=self.perform_search)
 		self.search_button.pack(side="left", padx=(5, 0))
 
-		self.search_button = tk.Button(self.search_frame, text="Update Repo", command=self.update_repo)
-		self.search_button.pack(side="left", padx=(5, 0))
+		self.update_button = tk.Button(self.search_frame, text="Update Repo", command=self.update_repo)
+		self.update_button.pack(side="left", padx=(5, 0))
 
 		self.game_list_frame = tk.Frame(root)
 		self.game_list_frame.pack(fill="both", expand=True, padx=10, pady=10)
@@ -188,7 +188,7 @@ class GameSelectorApp:
 		urllib.request.urlretrieve("https://raw.githubusercontent.com/pioliX000/IGG-Scraper/refs/heads/main/links_reformatted.json", "links_reformatted.json")
 		t = tk.Toplevel(self.root)
 		t.wm_title("Info")
-		l = tk.Label(t, text="Repo Update Successful")
+		l = tk.Label(t, text="Repo Update Successful\nrestart to apply")
 		l.pack(side="top", fill="both", expand=True, padx=50, pady=10)
 		
 	def on_search_change(self, event):
